@@ -1,39 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>模型授权验证</title>
-  <script>
-    // 模拟白名单（真实情况应从后端或表格验证）
-    const whitelist = {
-      "key001": 1751653200,
-      "key002": 1720065600,
-      "key003": 1720065600
-    };
-
-    window.onload = function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const key = urlParams.get('key');
-      const exp = parseInt(urlParams.get('exp'), 10);
-      const now = Math.floor(Date.now() / 1000);
-
-      if (!key || !exp || !whitelist[key]) {
-        document.body.innerHTML = "<h2>❌ 授权码无效</h2>";
-        return;
-      }
-
-      if (now > exp || now > whitelist[key]) {
-        document.body.innerHTML = "<h2>⏰ 授权已过期，请重新申请</h2>";
-        return;
-      }
-
-      // 跳转到实际模型地址
-      const redirectUrl = "https://bailian.console.aliyun.com/share/b2631d59031a41e3a809eaa4ae38fa8b?memoryId=8cb6ff08e82b41e0aac351158afa205d";
-      window.location.href = redirectUrl;
-    };
-  </script>
+  <meta charset="UTF-8">
+  <title>授权校验中...</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f7f7f7;
+    }
+    .msg {
+      font-size: 1.5rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h2>正在验证授权，请稍候...</h2>
+  <div class="msg" id="status">正在验证授权，请稍等...</div>
+
+  <script>
+    const sheetApi = 'https://script.google.com/macros/s/AKfycbzIt6mtKuDnro9-0VqelijU9HnlE61Xp61LKFqiLonzvP3gC06sjcusxpDzVDNT_5Gz0Q/exec';
+    const modelUrl = 'https://bailian.console.aliyun.com/share/b2631d59031a41e3a809eaa4ae38fa8b?memoryId=8cb6ff08e82b41e0aac351158afa205d';
+
+    async function checkAccess() {
+      const params = new URLSearchParams(window.location.search);
+      const key = params.get('key');
+      const exp = parseInt(params.get('exp'), 10);
+      const now = Math.floor(Date.now() / 1000);
+      const statusEl = document.getElementById('status');
+
+      if (!key || isNaN(exp)) {
+        statusEl.innerText = '❌ 授权信息不完整';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${sheetApi}?key=${key}`);
+        const result = await res.json();
+
+        if (!result.found) {
+          statusEl.innerText = '❌ 授权码不存在';
+        } else if (now > exp || now > parseInt(result.exp)) {
+          statusEl.innerText = '⏰ 授权已过期';
+        } else {
+          statusEl.innerText = '✅ 授权成功，正在跳转...';
+          setTimeout(() => {
+            window.location.href = modelUrl;
+          }, 1000);
+        }
+      } catch (err) {
+        statusEl.innerText = '⚠️ 网络错误，请稍后再试';
+      }
+    }
+
+    checkAccess();
+  </script>
 </body>
 </html>
