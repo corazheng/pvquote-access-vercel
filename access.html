@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>模型授权验证</title>
+  <script>
+    // 模拟白名单（真实情况应从后端或表格验证）
+    const whitelist = {
+      "key001": 1720065600,
+      "key002": 1720065600,
+      "key003": 1720065600
+    };
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const key = urlParams.get('key');
+      const exp = parseInt(urlParams.get('exp'), 10);
+      const now = Math.floor(Date.now() / 1000);
+
+      if (!key || !exp || !whitelist[key]) {
+        document.body.innerHTML = "<h2>❌ 授权码无效</h2>";
+        return;
+      }
+
+      if (now > exp || now > whitelist[key]) {
+        document.body.innerHTML = "<h2>⏰ 授权已过期，请重新申请</h2>";
+        return;
+      }
+
+      // 跳转到实际模型地址
+      const redirectUrl = "https://bailian.console.aliyun.com/share/b2631d59031a41e3a809eaa4ae38fa8b?memoryId=8cb6ff08e82b41e0aac351158afa205d";
+      window.location.href = redirectUrl;
+    };
+  </script>
+</head>
+<body>
+  <h2>正在验证授权，请稍候...</h2>
+</body>
+</html>
